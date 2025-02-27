@@ -1,6 +1,6 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for
 import numpy as np
-from Authentication import recognize_face, recognize_image
+from Authentication import recognize_image,capture_and_store_face
 import cv2
 from database import fetch_encoding
 
@@ -11,10 +11,18 @@ encodedFaces = fetch_encoding()
 
 
 @app.route('/')
+def welcome():
+    return render_template('welcome.html')
+@app.route('/index')
 def index():
     return render_template('index.html')
 
-
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':  # Ensure the function only runs for POST requests
+        capture_and_store_face()  # Capture face and store encoding
+        return redirect(url_for('index'))  # Redirect to login after registration
+    return render_template('register.html')
 @app.route("/verify", methods=["POST"])
 def verify():
     uploaded_file = request.files.get("image")
@@ -26,14 +34,6 @@ def verify():
     result = recognize_image(img, encodedFaces)
 
     return redirect(url_for("result", status=result.lower()))
-
-
-@app.route("/verify_camera", methods=["POST"])
-def verify_camera():
-    result = recognize_face(encodedFaces)
-    return redirect(url_for("result", status="authorized" if result else "unauthorized"))
-
-
 @app.route("/result")
 def result():
     status = request.args.get("status", "error")  # Get status from query params

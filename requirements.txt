@@ -1,1 +1,9 @@
+Flask==3.0.0
+opencv-python==4.8.0.76
+numpy==1.26.4
+face-recognition==1.3.0
+pillow==10.0.0
+cryptography==42.0.2
+pycryptodome==3.19.0
+sqlite3  # Built-in, but included for clarity
 
