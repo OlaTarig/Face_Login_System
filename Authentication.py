@@ -3,6 +3,7 @@ import numpy as np
 import face_recognition
 import os
 from database import upload_encoding, fetch_encoding, LogAttempt
+
 # File to track first-time launch
 FLAG_FILE = "first_run.txt"
 
@@ -44,65 +45,89 @@ def capture_and_store_face():
     cap.release()
     cv2.destroyAllWindows()
 
-# Check if it's the first time running the program
-if is_first_time():
-    capture_and_store_face()
-else:
-    print("[INFO] First-time capture already done. Proceeding with recognition...")
+# Function to recognize face
 
-# Open webcam for face recognition
-cap = cv2.VideoCapture(0)
-encodeListKnown = fetch_encoding()  # Load known encodings once
+def recognize_face(encodeListKnown):
+    allow = False
+    if is_first_time():
+        capture_and_store_face()
+    else:
+        print("[INFO] First-time capture already done. Proceeding with recognition...")
 
-while True:
-    success, img = cap.read()
-    if not success:
-        print("[ERROR] Failed to capture frame from webcam.")
-        break
+    # Open webcam for face recognition
+    cap = cv2.VideoCapture(0)
+    encodeListKnown = np.array(encodeListKnown)  # Convert stored encodings to NumPy array
 
-    # Resize and convert color
-    imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
-    imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
+    while True:
+        success, img = cap.read()
+        if not success:
+            print("[ERROR] Failed to capture frame from webcam.")
+            break
 
-    # Detect faces and compute encodings
-    facesCurFrame = face_recognition.face_locations(imgS)
-    encodesCurFrame = face_recognition.face_encodings(imgS, facesCurFrame)
+        # Resize for faster processing & convert to RGB
+        imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+        imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
-    for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
-        matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-        faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+        # Detect faces and compute encodings
+        facesCurFrame = face_recognition.face_locations(imgS)
+        encodesCurFrame = face_recognition.face_encodings(imgS, facesCurFrame)
 
-        if len(faceDis) > 0:
-            matchIndex = np.argmin(faceDis)
+        for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
+            matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+            faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+            status = ""
+            if len(faceDis) > 0:
+                matchIndex = np.argmin(faceDis)
+                if matches[matchIndex]:
+                    status = "Authorized"
+                    allow = True
+                    color = (0, 255, 0)  # Green
+                    print("[INFO] Authorized person detected. Stopping webcam...")
 
-            if matches[matchIndex]:
-                status = "Authorized"
-                color = (0, 255, 0)  # Green
-                print("[INFO] Authorized person detected. Stopping webcam...")
-            else:
-                status = "Unauthorized"
-                color = (0, 0, 255)  # Red
-                print("[WARNING] Unauthorized person detected. Stopping webcam...")
+                    # Convert face coordinates to original size
+                    y1, x2, y2, x1 = faceLoc
+                    y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
 
-            # Convert face coordinates to original size
-            y1, x2, y2, x1 = faceLoc
-            y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
+                    # Draw rectangle around face
+                    cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                    cv2.rectangle(img, (x1, y2 - 35), (x2, y2), color, cv2.FILLED)
+                    cv2.putText(img, status, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
 
-            # Draw rectangle around face
-            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-            cv2.rectangle(img, (x1, y2 - 35), (x2, y2), color, cv2.FILLED)
-            cv2.putText(img, status, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+                    # Log Attempt
+                    #LogAttempt(status)
 
-            # Log Attempt
-            LogAttempt(status)
+                    # Display result for a brief moment and stop
+                    cv2.imshow('Webcam', img)
+                    cv2.waitKey(2000)  # Show the result for 2 seconds
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    return  # Exit function once an authorized face is detected
 
+        # Show webcam feed continuously until a match is found
+        cv2.imshow('Webcam', img)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # Allow manual exit
+            break
 
-    # Show the webcam feed
-    cv2.imshow('Webcam', img)
+    cap.release()
+    cv2.destroyAllWindows()
+    return allow
 
-    # Exit when 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+def recognize_image(img,encodeListKnown):
+    processedImage = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    encodeListKnown = np.array(encodeListKnown)
+    imgFrame = face_recognition.face_locations(processedImage)
+    encodedImage = face_recognition.face_encodings(processedImage,imgFrame)
+    encodedImage = np.array(encodedImage[0])
+    matches = face_recognition.compare_faces(encodeListKnown,encodedImage)
+    faceDis = face_recognition.face_distance(encodeListKnown, encodedImage)
+    if len(faceDis) > 0:
+        matchIndex = np.argmin(faceDis)
+        if matches[matchIndex]:
+            return "Authorized person detected"
+        else:
+            return "Unauthorized person detected"
+def main():
+    recognize_face()
 
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()

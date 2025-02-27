@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Security</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static',filename = 'bigLogo.png') }}" alt="SmartEye Logo">
+            <img src="{{ url_for('static',filename = 'bigSlogan.png')}}" alt="Slogan" class="slogan-img">
+        </div>
+    </header>
+
+    <main>
+        <div class = "buttons">
+         <form action="/verify" method="post" enctype="multipart/form-data" id="upload-form">
+                <input type="file" name="image" id="file-upload" class="file-input" accept="image/*" onchange="submitForm()">
+                <label for="file-upload" class="scan-btn">Upload Image</label>
+            </form>
+         <form action="/verify_camera" method="post">
+            <button type="submit" class="scan-btn">Camera Verification</button>
+        </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Smart Eye. All rights reserved.</p>
+    </footer>
+</body>
+<script>
+       function submitForm() {
+            let form = document.getElementById("upload-form");
+            if (document.getElementById("file-upload").files.length > 0) {
+                form.submit();
+            }
+        }
+    </script>
+</html>

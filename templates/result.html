@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='bigLogo.png') }}" alt="SmartEye Logo">
+            <img src="{{ url_for('static', filename='bigSlogan.png') }}" class="slogan-img">
+        </div>
+    </header>
+    <main class="result-container">
+        {% if status == "authorized" %}
+            <div class="result-box success">
+                <img src="{{ url_for('static', filename='verify.png') }}" alt="Success">
+                <h2>Access Granted</h2>
+                <p>Welcome! Your face has been successfully recognized.</p>
+            </div>
+        {% else %}
+            <div class="result-box failure">
+                <img src="{{ url_for('static', filename='deny.png') }}" alt="Failed">
+                <h2>Access Denied</h2>
+                <p>Unauthorized face detected. Please try again.</p>
+            </div>
+        {% endif %}
+        <a href="{{ url_for('index') }}" class="back-btn">Go Back</a>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Smart Security. All rights reserved.</p>
+    </footer>
+</body>
+</html>
