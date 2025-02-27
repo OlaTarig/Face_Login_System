@@ -80,28 +80,17 @@ def recognize_face(encodeListKnown):
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
                     status = "Authorized"
-                    allow = True
-                    color = (0, 255, 0)  # Green
-                    print("[INFO] Authorized person detected. Stopping webcam...")
+                    cv2.waitKey(2000)  # Show the result for 2 seconds
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    return True
 
-                    # Convert face coordinates to original size
-                    y1, x2, y2, x1 = faceLoc
-                    y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
-
-                    # Draw rectangle around face
-                    cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-                    cv2.rectangle(img, (x1, y2 - 35), (x2, y2), color, cv2.FILLED)
-                    cv2.putText(img, status, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
 
                     # Log Attempt
                     #LogAttempt(status)
 
                     # Display result for a brief moment and stop
-                    cv2.imshow('Webcam', img)
-                    cv2.waitKey(2000)  # Show the result for 2 seconds
-                    cap.release()
-                    cv2.destroyAllWindows()
-                    return  # Exit function once an authorized face is detected
+                    # Exit function once an authorized face is detected
 
         # Show webcam feed continuously until a match is found
         cv2.imshow('Webcam', img)
@@ -123,9 +112,9 @@ def recognize_image(img,encodeListKnown):
     if len(faceDis) > 0:
         matchIndex = np.argmin(faceDis)
         if matches[matchIndex]:
-            return "Authorized person detected"
+            return "Authorized"
         else:
-            return "Unauthorized person detected"
+            return "Unauthorize"
 def main():
     recognize_face()
 

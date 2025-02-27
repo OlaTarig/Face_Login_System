@@ -1,10 +1,8 @@
 from flask import Flask, request, render_template, jsonify, redirect, url_for
-import face_recognition
 import numpy as np
 from Authentication import recognize_face, recognize_image
 import cv2
 from database import fetch_encoding
-import os
 
 app = Flask(__name__)
 
